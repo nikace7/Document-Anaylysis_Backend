@@ -33,7 +33,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '192.168.1.7',
     '192.168.101.6',
-    'localhost'
+    'localhost',
+    '192.168.1.68'
     
 ]
 
@@ -185,4 +186,7 @@ EMAIL_HOST_USER = 'test.ran.mail@gmail.com'
 EMAIL_HOST_PASSWORD = 'rlbo tpfu nzbb ixno '
 DEFAULT_FROM_EMAIL = 'test.ran.mail@gmail.com'
 
+# CORS
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+

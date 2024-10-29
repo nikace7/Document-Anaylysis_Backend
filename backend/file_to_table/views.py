@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import numpy as np
 import os
 import shutil
 from .models import *
@@ -6,14 +7,17 @@ from django.conf import settings
 import cv2
 import layoutparser as lp
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageFilter
 from django.http import HttpResponse
 from django.core.files.storage import default_storage
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.formrecognizer import DocumentAnalysisClient
+import io
 from docx import Document
 from io import BytesIO
 from dotenv import load_dotenv
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
 load_dotenv()
 
@@ -162,22 +166,22 @@ def download_docx(request):
 
 
 
-# def convert_to_image_test(pdf_file,output_folder,file:FileInput,dpi=200,quality=80):
+def convert_to_image_test(pdf_file,output_folder,file:FileInput,dpi=200,quality=80):
     
-#     path_to_pdf = os.path.join(settings.MEDIA_ROOT, pdf_file.path)
+    path_to_pdf = os.path.join(settings.MEDIA_ROOT, pdf_file.path)
     
-#     pdf_document = fitz.open(path_to_pdf)
-#     output_folder_path = output_folder
-#     print('output folder path:' + output_folder_path)
-#     if not os.path.exists(output_folder_path):
-#             os.makedirs(output_folder_path)
-#     for page_number in range(pdf_document.page_count):
-#         page = pdf_document.load_page(page_number)
-#         pix = page.get_pixmap(matrix=fitz.Matrix(dpi/72, dpi/72))
-#         file_page = FilePage.save_image_from_pixmap(pix, page_number,file)
-#         print(file_page.image.path)
+    pdf_document = fitz.open(path_to_pdf)
+    output_folder_path = output_folder
+    print('output folder path:' + output_folder_path)
+    if not os.path.exists(output_folder_path):
+            os.makedirs(output_folder_path)
+    for page_number in range(pdf_document.page_count):
+        page = pdf_document.load_page(page_number)
+        pix = page.get_pixmap(matrix=fitz.Matrix(dpi/72, dpi/72))
+        file_page = FilePage.save_image_from_pixmap(pix, page_number,file)
+        print(file_page.image.path)
 
-#     pdf_document.close()
+    pdf_document.close()
 
 
 
@@ -529,71 +533,71 @@ def download_docx(request):
 
 # ##################################################CamScanner##############################################################
 # #-------------------------------------------------IMAGE PROCESSING FOR PDF CONVERSION---------------------------------------------------
-# def sharpen(image, strength=1):
-#     # Define a sharpening kernel
-#     kernel = np.array([[-1, -1, -1],
-#                        [-1,  9, -1],
-#                        [-1, -1, -1]])
+def sharpen(image, strength=1):
+    # Define a sharpening kernel
+    kernel = np.array([[-1, -1, -1],
+                       [-1,  9, -1],
+                       [-1, -1, -1]])
     
-#     # Create a kernel filter
-#     kernel_filter = ImageFilter.Kernel((3, 3), kernel.flatten(), scale=strength)
+    # Create a kernel filter
+    kernel_filter = ImageFilter.Kernel((3, 3), kernel.flatten(), scale=strength)
     
-#     # Apply filter to the image
-#     sharpened_image = image.filter(kernel_filter)
+    # Apply filter to the image
+    sharpened_image = image.filter(kernel_filter)
     
-#     return sharpened_image
+    return sharpened_image
 
-# def resize_with_aspect_ratio(image_path, max_dimension=1500):
-#     image = Image.open(image_path)
-#     width, height = image.size
+def resize_with_aspect_ratio(image_path, max_dimension=1500):
+    image = Image.open(image_path)
+    width, height = image.size
     
-#     # if width < max_dimension or height<max_dimension:
-#     #     return image
+    # if width < max_dimension or height<max_dimension:
+    #     return image
     
-#     if width > height:
-#         scaling_factor = max_dimension / width
-#     else:
-#         scaling_factor = max_dimension / height
+    if width > height:
+        scaling_factor = max_dimension / width
+    else:
+        scaling_factor = max_dimension / height
     
-#     new_width = int(width * scaling_factor)
-#     new_height = int(height * scaling_factor)
-#     resized_image = image.resize((new_width, new_height))
+    new_width = int(width * scaling_factor)
+    new_height = int(height * scaling_factor)
+    resized_image = image.resize((new_width, new_height))
     
-#     return resized_image
+    return resized_image
 
-# def do_image_processing(x):
-#     image = resize_with_aspect_ratio(x)
-#     image_np = np.array(image)
+def do_image_processing(x):
+    image = resize_with_aspect_ratio(x)
+    image_np = np.array(image)
 
-#     yuv_image = cv2.cvtColor(image_np, cv2.COLOR_RGB2YUV)
-#     y, u, v = cv2.split(yuv_image)
-#     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(5, 5))
-#     y_eq = clahe.apply(y)
-#     yuv_image_eq = cv2.merge((y_eq, u, v))
-#     rgb_image_eq = cv2.cvtColor(yuv_image_eq, cv2.COLOR_YUV2BGR)
-#     equalized_image = Image.fromarray(rgb_image_eq)
+    yuv_image = cv2.cvtColor(image_np, cv2.COLOR_RGB2YUV)
+    y, u, v = cv2.split(yuv_image)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(5, 5))
+    y_eq = clahe.apply(y)
+    yuv_image_eq = cv2.merge((y_eq, u, v))
+    rgb_image_eq = cv2.cvtColor(yuv_image_eq, cv2.COLOR_YUV2BGR)
+    equalized_image = Image.fromarray(rgb_image_eq)
 
-#     denoised_image_array = rgb_image_eq
-#     denoised_image_array = cv2.bilateralFilter(denoised_image_array, d=-1, sigmaColor=50, sigmaSpace=50)
-#     denoised_image_array =cv2.GaussianBlur(denoised_image_array, (3,3), 0)
-#     denoised_image_array = cv2.bilateralFilter(denoised_image_array, d=-1, sigmaColor=25, sigmaSpace=25)
+    denoised_image_array = rgb_image_eq
+    denoised_image_array = cv2.bilateralFilter(denoised_image_array, d=-1, sigmaColor=50, sigmaSpace=50)
+    denoised_image_array =cv2.GaussianBlur(denoised_image_array, (3,3), 0)
+    denoised_image_array = cv2.bilateralFilter(denoised_image_array, d=-1, sigmaColor=25, sigmaSpace=25)
 
 
-#     denoised_image = Image.fromarray(denoised_image_array)
-#     sharpened_image = sharpen(denoised_image)
+    denoised_image = Image.fromarray(denoised_image_array)
+    sharpened_image = sharpen(denoised_image)
 
-#     sharpened_image_array = np.array(sharpened_image)
-#     threshold = (135,135,135)
-#     mask = np.all(sharpened_image_array>threshold, axis=-1)
-#     sharpened_image_array[mask] = (255,255,255)
+    sharpened_image_array = np.array(sharpened_image)
+    threshold = (135,135,135)
+    mask = np.all(sharpened_image_array>threshold, axis=-1)
+    sharpened_image_array[mask] = (255,255,255)
 
-#     threshold2 = (90,90,90)
-#     mask = np.all(sharpened_image_array<threshold2, axis=-1)
-#     sharpened_image_array[mask] = (0,0,0)
+    threshold2 = (90,90,90)
+    mask = np.all(sharpened_image_array<threshold2, axis=-1)
+    sharpened_image_array[mask] = (0,0,0)
 
-#     return sharpened_image_array.astype(np.uint8)
-#     # thresholded_image = Image.fromarray(sharpened_image_array)
-#     pass
+    return sharpened_image_array.astype(np.uint8)
+    # thresholded_image = Image.fromarray(sharpened_image_array)
+    pass
 
 # def de_shadow(image):
 #     # splitting the image into channels
@@ -687,11 +691,11 @@ def download_docx(request):
 #     # returning the shadow-free image
 #     return blend
 
-# def new_process_image(image):
-#     file_contents = image.file.read()
-#     image_stream = io.BytesIO(file_contents)
-#     y = do_image_processing(image_stream)
-#     return y
+def new_process_image(image):
+    file_contents = image.file.read()
+    image_stream = io.BytesIO(file_contents)
+    y = do_image_processing(image_stream)
+    return y
     
 # def process_image(image):
 #     file_contents = image.file.read()
@@ -705,34 +709,34 @@ def download_docx(request):
 #     return img
     
 
-# def images_to_pdf(image_paths):
-#     output_pdf = BytesIO()
+def images_to_pdf(image_paths):
+    output_pdf = BytesIO()
 
-#     c = canvas.Canvas(output_pdf, pagesize=A4)
-#     width, height = A4
+    c = canvas.Canvas(output_pdf, pagesize=A4)
+    width, height = A4
 
-#     for image_path in image_paths:
-#         img = Image.open(image_path)
-#         img_width, img_height = img.size
+    for image_path in image_paths:
+        img = Image.open(image_path)
+        img_width, img_height = img.size
 
-#         width_ratio = width / img_width
-#         height_ratio = height / img_height
-#         scale = min(width_ratio, height_ratio)
+        width_ratio = width / img_width
+        height_ratio = height / img_height
+        scale = min(width_ratio, height_ratio)
 
-#         new_width = img_width * scale
-#         new_height = img_height * scale
+        new_width = img_width * scale
+        new_height = img_height * scale
 
-#         x_position = (width - new_width) / 2
-#         y_position = (height - new_height) / 2
+        x_position = (width - new_width) / 2
+        y_position = (height - new_height) / 2
 
-#         c.drawImage(image_path, x_position, y_position, new_width, new_height)
-#         c.showPage()
+        c.drawImage(image_path, x_position, y_position, new_width, new_height)
+        c.showPage()
 
-#     c.save()
+    c.save()
 
-#     # Save the generated PDF file to a ContentFile
-#     pdf_content = output_pdf.getvalue()
-#     return pdf_content
+    # Save the generated PDF file to a ContentFile
+    pdf_content = output_pdf.getvalue()
+    return pdf_content
 
 # def images_to_a4_pdf(image_paths):
 #     output_pdf = BytesIO()
@@ -762,7 +766,7 @@ def download_docx(request):
 #     pdf_content = output_pdf.getvalue()
 #     return pdf_content
     
-# def create_pdf(images):
-#     pdf_content = images_to_pdf(images)
-#     return pdf_content
+def create_pdf(images):
+    pdf_content = images_to_pdf(images)
+    return pdf_content
     

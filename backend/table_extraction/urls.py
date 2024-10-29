@@ -23,7 +23,7 @@ from django.conf.urls.static import static
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet, basename='users')
-router.register(r'files', FileInputViewSet, 'files')
+router.register(r'files', FileInputViewSet, 'files') #pdf to image
 router.register(r'file-page', FilePageViewSet, 'file-page')
 router.register(r'images', ImageInputViewSet, 'image')    #table extraction
 router.register(r'scanned-files', ScannedFileViewSet, 'scanned-files')   #image to pdf
