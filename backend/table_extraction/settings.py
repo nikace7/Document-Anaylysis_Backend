@@ -102,9 +102,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ocr_db',
         'USER': 'postgres',
-        'PASSWORD': 'rAn@dmin',
+        'PASSWORD': 'Nik@ce123',
         'HOST': 'localhost',  # Or your database host
-        'PORT': '5432',       # Or your database port
+        'PORT': '5433',       # Or your database port
     }
 }
 
