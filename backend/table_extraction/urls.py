@@ -34,6 +34,7 @@ router.register(r'forgot-password', PasswordResetRequestViewSet, 'forgot-passwor
 router.register(r'contact-form', ContactFormViewSet, 'contact-us-form')
 router.register(r'bug-report', BugReportViewSet, 'bug-report')
 router.register(r'pdf-to-docx', PDFtoDOCXViewSet, basename='pdf-to-docx') #pdf to docx
+router.register(r'image-to-text', ImageTextExtractionViewSet, basename='image-to-text') #image to text
 
 urlpatterns = [
     path('admin/', admin.site.urls),
