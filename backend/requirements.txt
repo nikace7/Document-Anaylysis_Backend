@@ -1,0 +1,8 @@
+Django==4.2  # Adjust version as needed
+djangorestframework==3.14.0  # Adjust version as needed
+python-dotenv==1.0.0  # For loading environment variables
+azure-ai-formrecognizer==3.2.0b3  # For Azure Form Recognizer client
+pandas==2.1.0  # For table extraction and manipulation
+openpyxl==3.1.2  # Optional, for handling Excel files (if needed in the future)
+python-docx==0.8.11  # For creating Word documents
+opencv-python==4.8.0.74  # For image processing with OpenCV
