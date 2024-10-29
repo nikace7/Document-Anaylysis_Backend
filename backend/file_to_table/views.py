@@ -183,7 +183,16 @@ def convert_to_image_test(pdf_file,output_folder,file:FileInput,dpi=200,quality=
 
     pdf_document.close()
 
+def convert_images_to_docx(image_paths):
+    doc = Document()
 
+    for image_path in image_paths:
+        process_image(image_path)
+
+    doc_buffer = BytesIO()
+    doc.save(doc_buffer)
+    doc_buffer.seek(0)
+    return doc_buffer
 
 # from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 # from docx import Document
