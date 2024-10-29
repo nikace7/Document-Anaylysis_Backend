@@ -139,7 +139,7 @@ class ContactFormSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 
-class ImageUploadSerializer(serializers.Serializer):
+class ImageUploadSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Image
-        fields = '__all__'             
+        model = ExtractedText
+        fields = ['image']  

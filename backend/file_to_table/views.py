@@ -146,25 +146,37 @@ def extract_text_from_image(image_path):
     with open(image_path, "rb") as f:
         image_data = f.read()
 
+
     poller = document_analysis_client.begin_analyze_document("prebuilt-layout", image_data)
     result = poller.result()
 
-    extracted_text = []
+    structured_text = []
 
     for page in result.pages:
-        page_text = {"lines": [], "paragraphs": [], "tables": []}
+        page_content = {"lines": [], "paragraphs": [], "tables": []}
 
-        for line in page.lines:
-            page_text["lines"].append({
-                "text": line.content,
-                "bounding_box": line.bounding_box 
-            })
 
+        if hasattr(page, 'lines'):
+            for line in page.lines:
+                line_data = {
+                    "text": line.content,
+                }
+           
+                if hasattr(line, 'bounding_box'):
+                    line_data["bounding_box"] = line.bounding_box
+                page_content["lines"].append(line_data)
+
+ 
         for paragraph in result.paragraphs:
-            page_text["paragraphs"].append({
-                "text": paragraph.content,
-                "bounding_box": paragraph.bounding_box 
-            })
+            is_table_content = any(cell.content == paragraph.content for table in result.tables for cell in table.cells)
+            if not is_table_content:
+                paragraph_data = {
+                    "text": paragraph.content,
+                }
+        
+                if hasattr(paragraph, 'bounding_box'):
+                    paragraph_data["bounding_box"] = paragraph.bounding_box
+                page_content["paragraphs"].append(paragraph_data)
 
         for table in result.tables:
             table_data = []
@@ -173,13 +185,14 @@ def extract_text_from_image(image_path):
                     "row_index": cell.row_index,
                     "col_index": cell.column_index,
                     "content": cell.content,
-                    "bounding_box": cell.bounding_box  
+                    "bounding_box": getattr(cell, 'bounding_box', None)
                 })
-            page_text["tables"].append(table_data)
+            page_content["tables"].append(table_data)
 
-        extracted_text.append(page_text)
+        structured_text.append(page_content)
 
-    return extracted_text
+    return structured_text  # Return structured text as JSON
+
 
 def convert_image_to_docx(image_path):
     doc = process_image(image_path)

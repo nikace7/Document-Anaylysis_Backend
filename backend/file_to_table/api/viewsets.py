@@ -484,6 +484,7 @@ class PDFtoDOCXViewSet(viewsets.ViewSet):
     
     
 #For Text Extraction
+
 class ImageTextExtractionViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -491,26 +492,24 @@ class ImageTextExtractionViewSet(viewsets.ViewSet):
         serializer = ImageUploadSerializer(data=request.data)
         if serializer.is_valid():
             image_file = serializer.validated_data['image']
+            image_path = f"{image_file.name}"  # Temporary path to save the image
 
-            # Save image temporarily to disk for processing
-            image_path = os.path.join(settings.MEDIA_ROOT, 'temp', image_file.name)
+            # Save the image temporarily
             with open(image_path, 'wb+') as f:
                 for chunk in image_file.chunks():
                     f.write(chunk)
 
-            # Extract text from the image
-            extracted_text_data = extract_text_from_image(image_path)
+            # Extract structured text from the image using the provided function
+            extracted_text = extract_text_from_image(image_path)
 
-            # Create an ExtractedText object to store the result
+            # Create the ExtractedText instance in the database
             extracted_text_instance = ExtractedText.objects.create(
                 user=request.user,
                 image=image_file,
-                extracted_text=extracted_text_data
+                extracted_text=extracted_text  # Save the structured text directly
             )
 
-            # Delete the temporary image after processing
-            os.remove(image_path)
-
+            # Return a response with the ID and extracted text
             return Response({
                 "id": extracted_text_instance.id,
                 "extracted_text": extracted_text_instance.extracted_text

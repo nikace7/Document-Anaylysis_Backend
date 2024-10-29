@@ -55,7 +55,8 @@ class ImageInput(models.Model):
 class ExtractedText(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE) 
     image = models.ImageField(upload_to='extracted_images/') 
-    extracted_text = models.TextField() 
+    extracted_text = models.TextField(blank=True, null=True) 
+    created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Extracted text by {self.user.username} on {self.created_at}"    
