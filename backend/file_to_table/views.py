@@ -189,6 +189,22 @@ def download_docx(request):
 
 
 
+# def convert_to_image_test(pdf_file,output_folder,file:FileInput,dpi=200,quality=80):
+    
+#     path_to_pdf = os.path.join(settings.MEDIA_ROOT, pdf_file.path)
+    
+#     pdf_document = fitz.open(path_to_pdf)
+#     output_folder_path = output_folder
+#     print('output folder path:' + output_folder_path)
+#     if not os.path.exists(output_folder_path):
+#             os.makedirs(output_folder_path)
+#     for page_number in range(pdf_document.page_count):
+#         page = pdf_document.load_page(page_number)
+#         pix = page.get_pixmap(matrix=fitz.Matrix(dpi/72, dpi/72))
+#         file_page = FilePage.save_image_from_pixmap(pix, page_number,file)
+#         print(file_page.image.path)
+
+#     pdf_document.close()
 
 
 
