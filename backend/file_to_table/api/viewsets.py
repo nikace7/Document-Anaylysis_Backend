@@ -38,6 +38,7 @@ from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 import time
+from rest_framework.permissions import IsAuthenticated
 from ..views import process_image_for_table_extraction , convert_image_to_docx 
 
 class PostOnlyFreeAuthentication(BaseAuthentication):
@@ -437,22 +438,21 @@ class WordConversionViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-# Viewset for handling PDF to DOCX conversion.       
+# Viewset for handling PDF to DOCX conversion.
 class PDFtoDOCXViewSet(viewsets.ViewSet):
-    serializer_class = FileInputSerializer
-    pagination_class = PageNumberPagination
-    permission_classes = [DjangoModelPermissions]
-    
+    permission_classes = [IsAuthenticated]
+
     def create(self, request):
         if 'file' not in request.FILES:
             return Response({"error": "No PDF file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
 
         pdf_file = request.FILES['file']
-        
+
         file_input = FileInput.objects.create(file=pdf_file, user=request.user)
         output_folder = "Output_images"
 
         convert_to_image_test(file_input.file, output_folder, file_input, dpi=300, quality=90)
+
         image_paths = [file_page.image.path for file_page in file_input.filepage_set.all()]
 
         doc_buffer = convert_images_to_docx(image_paths)
@@ -460,20 +460,21 @@ class PDFtoDOCXViewSet(viewsets.ViewSet):
         current_datetime = django_now()
         formatted_datetime = f"{current_datetime:%Y-%m-%d %H:%M:%S}"
         file_name = f'{request.user.username}-{formatted_datetime}'
-        
+
         document_model = WordConversion.objects.create(
             user=request.user,
             document=ContentFile(doc_buffer.read(), name=f'{file_name}.docx'),
             image=file_input.file
         )
-
         for file_page in file_input.filepage_set.all():
             file_page.delete()
-
+            
         return Response(
             WordConversionSerializer(document_model).data,
             status=status.HTTP_200_OK
         )
+
+
        
 class GuestScannedFileViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
