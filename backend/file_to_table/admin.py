@@ -14,6 +14,7 @@ from .models import (
     BugReport,
     BugImage,
     ContactForm,
+    ExtractedText
 )
 
 @admin.register(User)
@@ -88,3 +89,15 @@ class BugImageAdmin(admin.ModelAdmin):
 class ContactFormAdmin(admin.ModelAdmin):
     list_display = ('name', 'email', 'subject', 'description')
     search_fields = ('name', 'email', 'subject')
+
+@admin.register(ExtractedText)
+class ExtractedTextAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created', 'image', 'extracted_text_preview')
+    search_fields = ('user__username', 'extracted_text')
+    list_filter = ('user', 'created')
+    ordering = ('-created',)
+
+    def extracted_text_preview(self, obj):
+        return obj.extracted_text[:50] if obj.extracted_text else 'No text extracted'
+    
+    extracted_text_preview.short_description = 'Extracted Text Preview'
