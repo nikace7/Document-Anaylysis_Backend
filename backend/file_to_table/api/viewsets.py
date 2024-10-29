@@ -451,28 +451,37 @@ class PDFtoDOCXViewSet(viewsets.ViewSet):
         file_input = FileInput.objects.create(file=pdf_file, user=request.user)
         output_folder = "Output_images"
 
+        # Convert PDF to images
         convert_to_image_test(file_input.file, output_folder, file_input, dpi=300, quality=90)
 
+        # Collect paths of the generated images
         image_paths = [file_page.image.path for file_page in file_input.filepage_set.all()]
 
+        # Convert images to DOCX format
         doc_buffer = convert_images_to_docx(image_paths)
 
+        # Generate a timestamped filename
         current_datetime = django_now()
         formatted_datetime = f"{current_datetime:%Y-%m-%d %H:%M:%S}"
         file_name = f'{request.user.username}-{formatted_datetime}'
 
+        # Save the DOCX file to the WordConversion model
         document_model = WordConversion.objects.create(
             user=request.user,
             document=ContentFile(doc_buffer.read(), name=f'{file_name}.docx'),
             image=file_input.file
         )
+
+        # Clean up generated images
         for file_page in file_input.filepage_set.all():
             file_page.delete()
-            
+
+        # Return the response with the created document
         return Response(
             WordConversionSerializer(document_model).data,
             status=status.HTTP_200_OK
         )
+    
     
 #For Text Extraction
 class ImageTextExtractionViewSet(viewsets.ViewSet):
@@ -481,10 +490,10 @@ class ImageTextExtractionViewSet(viewsets.ViewSet):
     def create(self, request):
         serializer = ImageUploadSerializer(data=request.data)
         if serializer.is_valid():
-            image_file = serializer.validated_data['file']
+            image_file = serializer.validated_data['image']
 
-            # Save the file temporarily or process it directly
-            image_path = f"temp/{image_file.name}"  # Adjust as needed for your storage strategy
+            # Save image temporarily to disk for processing
+            image_path = os.path.join(settings.MEDIA_ROOT, 'temp', image_file.name)
             with open(image_path, 'wb+') as f:
                 for chunk in image_file.chunks():
                     f.write(chunk)
@@ -492,10 +501,20 @@ class ImageTextExtractionViewSet(viewsets.ViewSet):
             # Extract text from the image
             extracted_text_data = extract_text_from_image(image_path)
 
-            # Optionally, remove the temporary file after extraction
-            # os.remove(image_path)
+            # Create an ExtractedText object to store the result
+            extracted_text_instance = ExtractedText.objects.create(
+                user=request.user,
+                image=image_file,
+                extracted_text=extracted_text_data
+            )
 
-            return Response(extracted_text_data, status=status.HTTP_200_OK)
+            # Delete the temporary image after processing
+            os.remove(image_path)
+
+            return Response({
+                "id": extracted_text_instance.id,
+                "extracted_text": extracted_text_instance.extracted_text
+            }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
        

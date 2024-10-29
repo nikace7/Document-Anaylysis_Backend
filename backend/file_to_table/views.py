@@ -18,6 +18,8 @@ from io import BytesIO
 from dotenv import load_dotenv
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from docx import Document
+from docx.shared import Inches
 
 load_dotenv()
 
@@ -148,7 +150,7 @@ def extract_text_from_image(image_path):
     result = poller.result()
 
     extracted_text = []
-    
+
     for page in result.pages:
         page_text = {"lines": [], "paragraphs": [], "tables": []}
 
@@ -164,7 +166,6 @@ def extract_text_from_image(image_path):
                 "bounding_box": paragraph.bounding_box 
             })
 
-      
         for table in result.tables:
             table_data = []
             for cell in table.cells:
@@ -228,12 +229,66 @@ def convert_images_to_docx(image_paths):
     doc = Document()
 
     for image_path in image_paths:
-        process_image(image_path)
+        process_pdf_image(image_path, doc)
 
     doc_buffer = BytesIO()
     doc.save(doc_buffer)
     doc_buffer.seek(0)
     return doc_buffer
+
+def process_pdf_image(image_path ,doc):
+    image = cv2.imread(image_path)
+
+    with open(image_path, "rb") as f:
+        image_data = f.read()
+
+    poller = document_analysis_client.begin_analyze_document("prebuilt-layout", image_data)
+    result = poller.result()
+
+    page_elements = []
+    for page in result.pages:
+        if hasattr(page, 'lines'):
+            for line in page.lines:
+                page_elements.append(('line', get_y_coordinate(line), line))
+
+    for paragraph in result.paragraphs:
+        is_table_content = any(cell.content == paragraph.content for table in result.tables for cell in table.cells)
+        if not is_table_content:
+            page_elements.append(('paragraph', get_y_coordinate(paragraph), paragraph))
+
+    for table in result.tables:
+        page_elements.append(('table', get_y_coordinate(table), table))
+
+    # Sort elements by their Y-coordinate to maintain order
+    page_elements.sort(key=lambda x: x[1])
+
+    for element_type, y_coord, element in page_elements:
+        if element_type == 'paragraph':
+            role = element.role
+            content = element.content
+
+            if role == "title":
+                doc.add_heading(content, level=1)  # Adjust the level as needed
+            elif role == "sectionHeading":
+                doc.add_heading(content, level=2)  # Adjust the level as needed
+            elif role == "pageHeader":
+                doc.add_paragraph(content, style='Header')  # Add a header style if desired
+            elif role == "pageFooter":
+                doc.add_paragraph(content, style='Footer')  # Add a footer style if desired
+            elif role == "footnote":
+                doc.add_paragraph(content, style='Footnote')  # Add a footnote style if desired
+            else:
+                doc.add_paragraph(content)  # Default to a regular paragraph
+
+        elif element_type == 'table':
+            table_doc = doc.add_table(rows=element.row_count, cols=element.column_count)
+
+            for cell in element.cells:
+                row = cell.row_index
+                col = cell.column_index
+                table_doc.cell(row, col).text = cell.content
+
+    return doc
 
 # from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 # from docx import Document

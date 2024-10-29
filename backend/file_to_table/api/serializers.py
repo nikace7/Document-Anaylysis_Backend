@@ -140,4 +140,6 @@ class ContactFormSerializer(serializers.ModelSerializer):
         
 
 class ImageUploadSerializer(serializers.Serializer):
-    file = serializers.ImageField()            
+    class Meta:
+        model = Image
+        fields = '__all__'             

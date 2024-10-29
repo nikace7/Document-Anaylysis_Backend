@@ -51,6 +51,15 @@ class ImageInput(models.Model):
     created= models.DateTimeField(auto_now_add=True)
     table = models.JSONField(blank = True, null=True)
 
+
+class ExtractedText(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE) 
+    image = models.ImageField(upload_to='extracted_images/') 
+    extracted_text = models.TextField() 
+
+    def __str__(self):
+        return f"Extracted text by {self.user.username} on {self.created_at}"    
+
 class WordConversion(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
