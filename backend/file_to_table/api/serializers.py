@@ -138,4 +138,6 @@ class ContactFormSerializer(serializers.ModelSerializer):
         model=ContactForm
         fields = '__all__'
         
-            
+
+class ImageUploadSerializer(serializers.Serializer):
+    file = serializers.ImageField()            

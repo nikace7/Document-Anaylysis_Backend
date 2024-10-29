@@ -473,8 +473,31 @@ class PDFtoDOCXViewSet(viewsets.ViewSet):
             WordConversionSerializer(document_model).data,
             status=status.HTTP_200_OK
         )
+    
+#For Text Extraction
+class ImageTextExtractionViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
 
+    def create(self, request):
+        serializer = ImageUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            image_file = serializer.validated_data['file']
 
+            # Save the file temporarily or process it directly
+            image_path = f"temp/{image_file.name}"  # Adjust as needed for your storage strategy
+            with open(image_path, 'wb+') as f:
+                for chunk in image_file.chunks():
+                    f.write(chunk)
+
+            # Extract text from the image
+            extracted_text_data = extract_text_from_image(image_path)
+
+            # Optionally, remove the temporary file after extraction
+            # os.remove(image_path)
+
+            return Response(extracted_text_data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
        
 class GuestScannedFileViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination

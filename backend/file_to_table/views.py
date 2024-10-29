@@ -139,6 +139,47 @@ def process_image(image_path):
 
     return doc
 
+
+def extract_text_from_image(image_path):
+    with open(image_path, "rb") as f:
+        image_data = f.read()
+
+    poller = document_analysis_client.begin_analyze_document("prebuilt-layout", image_data)
+    result = poller.result()
+
+    extracted_text = []
+    
+    for page in result.pages:
+        page_text = {"lines": [], "paragraphs": [], "tables": []}
+
+        for line in page.lines:
+            page_text["lines"].append({
+                "text": line.content,
+                "bounding_box": line.bounding_box 
+            })
+
+        for paragraph in result.paragraphs:
+            page_text["paragraphs"].append({
+                "text": paragraph.content,
+                "bounding_box": paragraph.bounding_box 
+            })
+
+      
+        for table in result.tables:
+            table_data = []
+            for cell in table.cells:
+                table_data.append({
+                    "row_index": cell.row_index,
+                    "col_index": cell.column_index,
+                    "content": cell.content,
+                    "bounding_box": cell.bounding_box  
+                })
+            page_text["tables"].append(table_data)
+
+        extracted_text.append(page_text)
+
+    return extracted_text
+
 def convert_image_to_docx(image_path):
     doc = process_image(image_path)
 
