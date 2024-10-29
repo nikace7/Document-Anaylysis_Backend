@@ -1,28 +1,19 @@
 from django.shortcuts import render
 import os
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import shutil
-import fitz
 from .models import *
 from django.conf import settings
 import cv2
-from django.shortcuts import render
 import layoutparser as lp
-import glob
 import pandas as pd
-import numpy as np
 from PIL import Image
-from tqdm.auto import tqdm
-from blend_modes import divide
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-import easyocr
-from PIL import Image, ImageFilter
-import time
+from django.http import HttpResponse
+from django.core.files.storage import default_storage
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.formrecognizer import DocumentAnalysisClient
+from docx import Document
+from io import BytesIO
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -66,7 +57,6 @@ def render_table_as_html(tables_list):
         f.write('</body></html>')
     return output_html_path
 
-
 def extract_and_display_tables(request):
     image_input = ImageInput.objects.first()  # Assuming you have a model instance with the image
     if not image_input:
@@ -83,25 +73,12 @@ def extract_and_display_tables(request):
 
 ###################################################convert to doc starts here#########################################################
 
-from docx import Document
-import io
-import cv2
-from django.http import HttpResponse
-from django.core.files.storage import default_storage
-
 def get_y_coordinate(element):
     if hasattr(element, 'boundingRegions') and element.boundingRegions:
         return element.boundingRegions[0].boundingBox[1]
     elif hasattr(element, 'spans') and element.spans:
         return element.spans[0].offset
     return float('inf')
-
-# def add_table_to_doc(table, doc):
-#     table_doc = doc.add_table(rows=table.row_count, cols=table.column_count)
-#     for cell in table.cells:
-#         row = cell.row_index
-#         col = cell.column_index
-#         table_doc.cell(row, col).text = cell.content
 
 def process_image(image_path):
     image = cv2.imread(image_path)
@@ -129,7 +106,6 @@ def process_image(image_path):
 
     # Sort elements by their Y-coordinate to maintain order
     page_elements.sort(key=lambda x: x[1])
-
 
     for element_type, y_coord, element in page_elements:
         if element_type == 'paragraph':
@@ -159,13 +135,10 @@ def process_image(image_path):
 
     return doc
 
-
-
-
 def convert_image_to_docx(image_path):
     doc = process_image(image_path)
 
-    doc_buffer = io.BytesIO()
+    doc_buffer = BytesIO()
     doc.save(doc_buffer)
     doc_buffer.seek(0)
     return doc_buffer

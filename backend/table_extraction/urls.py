@@ -25,11 +25,11 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet, basename='users')
 router.register(r'files', FileInputViewSet, 'files')
 router.register(r'file-page', FilePageViewSet, 'file-page')
-router.register(r'images', ImageInputViewSet, 'image')
-router.register(r'scanned-files', ScannedFileViewSet, 'scanned-files')
+router.register(r'images', ImageInputViewSet, 'image')    #table extraction
+router.register(r'scanned-files', ScannedFileViewSet, 'scanned-files')   #image to pdf
 router.register(r'scanned-images', ScannedImageViewSet, 'scanned-images')
 router.register(r'guest-scanned-files', GuestScannedFileViewSet, 'guest-scanned-files')
-router.register(r'convert-doc', WordConversionViewSet, 'word-conversion')
+router.register(r'convert-doc', WordConversionViewSet, 'word-conversion')  #image to word
 router.register(r'forgot-password', PasswordResetRequestViewSet, 'forgot-password')
 router.register(r'contact-form', ContactFormViewSet, 'contact-us-form')
 router.register(r'bug-report', BugReportViewSet, 'bug-report')
