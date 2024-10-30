@@ -169,7 +169,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class FileInputViewSet(viewsets.ModelViewSet):
     serializer_class = FileInputSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [DjangoModelPermissions]
+    #permission_classes = [DjangoModelPermissions]
     
     def get_queryset(self):
         token = self.request.headers['authorization'].split(' ')[1]
@@ -206,7 +206,7 @@ class FileInputViewSet(viewsets.ModelViewSet):
 
 class FilePageViewSet(viewsets.ModelViewSet):
     serializer_class = FilePageSerializer
-    permission_classes = [DjangoModelPermissions]
+    #permission_classes = [DjangoModelPermissions]
     pagination_class = PageNumberPagination
     
     def get_queryset(self):
@@ -228,7 +228,7 @@ class FilePageViewSet(viewsets.ModelViewSet):
 #table extraction 
 class ImageInputViewSet(viewsets.ModelViewSet):
     serializer_class = ImageInputSerializer
-    permission_classes = [DjangoModelPermissions]
+    #permission_classes = [DjangoModelPermissions]
     pagination_class = PageNumberPagination
     
     def get_queryset(self):
@@ -303,7 +303,7 @@ class ImageInputViewSet(viewsets.ModelViewSet):
 class ScannedFileViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     serializer_class = ScannedFileSerializer
-    permission_classes = [DjangoModelPermissions]
+    #permission_classes = [DjangoModelPermissions]
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -365,7 +365,7 @@ class ScannedFileViewSet(viewsets.ModelViewSet):
 
 class ScannedImageViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
-    permission_classes = [DjangoModelPermissions]
+    #permission_classes = [DjangoModelPermissions]
     serializer_class = ScannedImageSerializer
     
     def get_serializer_context(self):

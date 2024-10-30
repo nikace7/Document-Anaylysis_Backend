@@ -24,7 +24,7 @@ from docx.shared import Inches
 load_dotenv()
 
 # Set up Azure Form Recognizer client
-key = os.getenv('key')
+key = "965421d261a14aafb82516e2bfebbd11"
 endpoint = os.getenv('endpoint')
 
 document_analysis_client = DocumentAnalysisClient(endpoint=endpoint, credential=AzureKeyCredential(key))
